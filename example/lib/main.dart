@@ -2,17 +2,20 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
+import 'package:flutter_scanner_plus/flutter_scanner_plus.dart';
 
-void main() => runApp(MyApp());
+void main() => runApp(const MyApp());
 
 class MyApp extends StatefulWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
   _MyAppState createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
   String _scanBarcode = 'Unknown';
+  StreamSubscription? scanSubscription;
 
   @override
   void initState() {
@@ -20,18 +23,21 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> startBarcodeScanStream() async {
-    FlutterBarcodeScanner.getBarcodeStreamReceiver(
-            '#ff6666', 'Cancel', true, ScanMode.BARCODE)!
-        .listen((barcode) => print(barcode));
+    scanSubscription =
+        FlutterScannerPlus.scanStreamReceiver(scanMode: ScanMode.barcode)
+            ?.listen((barcode) {
+      debugPrint(barcode);
+    });
   }
 
   Future<void> scanQR() async {
     String barcodeScanRes;
     // Platform messages may fail, so we use a try/catch PlatformException.
     try {
-      barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
-          '#ff6666', 'Cancel', true, ScanMode.QR);
-      print(barcodeScanRes);
+      barcodeScanRes = await FlutterScannerPlus.scan(
+        scanMode: ScanMode.qrcode,
+      );
+      debugPrint(barcodeScanRes);
     } on PlatformException {
       barcodeScanRes = 'Failed to get platform version.';
     }
@@ -51,9 +57,10 @@ class _MyAppState extends State<MyApp> {
     String barcodeScanRes;
     // Platform messages may fail, so we use a try/catch PlatformException.
     try {
-      barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
-          '#ff6666', 'Cancel', true, ScanMode.BARCODE);
-      print(barcodeScanRes);
+      barcodeScanRes = await FlutterScannerPlus.scan(
+        scanMode: ScanMode.barcode,
+      );
+      debugPrint(barcodeScanRes);
     } on PlatformException {
       barcodeScanRes = 'Failed to get platform version.';
     }
@@ -69,29 +76,46 @@ class _MyAppState extends State<MyApp> {
   }
 
   @override
+  void dispose() {
+    scanSubscription?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        home: Scaffold(
-            appBar: AppBar(title: const Text('Barcode scan')),
-            body: Builder(builder: (BuildContext context) {
-              return Container(
-                  alignment: Alignment.center,
-                  child: Flex(
-                      direction: Axis.vertical,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        ElevatedButton(
-                            onPressed: () => scanBarcodeNormal(),
-                            child: Text('Start barcode scan')),
-                        ElevatedButton(
-                            onPressed: () => scanQR(),
-                            child: Text('Start QR scan')),
-                        ElevatedButton(
-                            onPressed: () => startBarcodeScanStream(),
-                            child: Text('Start barcode scan stream')),
-                        Text('Scan result : $_scanBarcode\n',
-                            style: TextStyle(fontSize: 20))
-                      ]));
-            })));
+      home: Scaffold(
+        appBar: AppBar(title: const Text('Barcode scan')),
+        body: Builder(
+          builder: (BuildContext context) {
+            return Container(
+              alignment: Alignment.center,
+              child: Flex(
+                direction: Axis.vertical,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  ElevatedButton(
+                    onPressed: () => scanBarcodeNormal(),
+                    child: const Text('Start barcode scan'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => scanQR(),
+                    child: const Text('Start QR scan'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => startBarcodeScanStream(),
+                    child: const Text('Start barcode scan stream'),
+                  ),
+                  Text(
+                    'Scan result : $_scanBarcode\n',
+                    style: const TextStyle(fontSize: 20),
+                  )
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 }

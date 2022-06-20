@@ -26,16 +26,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
-import android.os.Build;
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-
-import com.google.android.material.snackbar.Snackbar;
-
-import androidx.core.app.ActivityCompat;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -45,6 +36,9 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 import com.amolg.flutterbarcodescanner.camera.CameraSource;
 import com.amolg.flutterbarcodescanner.camera.CameraSourcePreview;
@@ -55,6 +49,7 @@ import com.google.android.gms.common.api.CommonStatusCodes;
 import com.google.android.gms.vision.MultiProcessor;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.io.IOException;
 
@@ -111,33 +106,33 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
 
             String buttonText = "";
             try {
-                    buttonText = (String) getIntent().getStringExtra("cancelButtonText");
-        } catch (Exception e) {
-            buttonText = "Cancel";
-            Log.e("BCActivity:onCreate()", "onCreate: " + e.getLocalizedMessage());
-        }
+                buttonText = (String) getIntent().getStringExtra("cancelButtonText");
+            } catch (Exception e) {
+                buttonText = "Cancel";
+                Log.e("BCActivity:onCreate()", "onCreate: " + e.getLocalizedMessage());
+            }
 
-        Button btnBarcodeCaptureCancel = findViewById(R.id.btnBarcodeCaptureCancel);
-        btnBarcodeCaptureCancel.setText(buttonText);
-        btnBarcodeCaptureCancel.setOnClickListener(this);
+            Button btnBarcodeCaptureCancel = findViewById(R.id.btnBarcodeCaptureCancel);
+            btnBarcodeCaptureCancel.setText(buttonText);
+            btnBarcodeCaptureCancel.setOnClickListener(this);
 
-        imgViewBarcodeCaptureUseFlash = findViewById(R.id.imgViewBarcodeCaptureUseFlash);
-        imgViewBarcodeCaptureUseFlash.setOnClickListener(this);
-        imgViewBarcodeCaptureUseFlash.setVisibility(FlutterBarcodeScannerPlugin.isShowFlashIcon ? View.VISIBLE : View.GONE);
+            imgViewBarcodeCaptureUseFlash = findViewById(R.id.imgViewBarcodeCaptureUseFlash);
+            imgViewBarcodeCaptureUseFlash.setOnClickListener(this);
+            imgViewBarcodeCaptureUseFlash.setVisibility(FlutterBarcodeScannerPlugin.isShowFlashIcon ? View.VISIBLE : View.GONE);
 
-        imgViewSwitchCamera = findViewById(R.id.imgViewSwitchCamera);
-        imgViewSwitchCamera.setOnClickListener(this);
+            imgViewSwitchCamera = findViewById(R.id.imgViewSwitchCamera);
+            imgViewSwitchCamera.setOnClickListener(this);
 
-        mPreview = findViewById(R.id.preview);
-        mGraphicOverlay = findViewById(R.id.graphicOverlay);
+            mPreview = findViewById(R.id.preview);
+            mGraphicOverlay = findViewById(R.id.graphicOverlay);
 
-        // read parameters from the intent used to launch the activity.
-        boolean autoFocus = true;
-        boolean useFlash = false;
+            // read parameters from the intent used to launch the activity.
+            boolean autoFocus = true;
+            boolean useFlash = false;
 
-        // Check for the camera permission before accessing the camera.  If the
-        // permission is not granted yet, request permission.
-        int rc = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
+            // Check for the camera permission before accessing the camera.  If the
+            // permission is not granted yet, request permission.
+            int rc = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
             if (rc == PackageManager.PERMISSION_GRANTED) {
                 createCameraSource(autoFocus, useFlash, CameraSource.CAMERA_FACING_BACK);
             } else {
@@ -148,6 +143,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
             scaleGestureDetector = new ScaleGestureDetector(this, new ScaleListener());
 
         } catch (Exception e) {
+            Log.e("BCActivity:onCreate()", "onCreate: " + e.getLocalizedMessage());
         }
     }
 
@@ -177,7 +173,7 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
 
         findViewById(R.id.topLayout).setOnClickListener(listener);
         Snackbar.make(mGraphicOverlay, R.string.permission_camera_rationale,
-                Snackbar.LENGTH_INDEFINITE)
+                        Snackbar.LENGTH_INDEFINITE)
                 .setAction(R.string.ok, listener)
                 .show();
     }
@@ -233,10 +229,8 @@ public final class BarcodeCaptureActivity extends AppCompatActivity implements B
                 .setFlashMode(useFlash ? Camera.Parameters.FLASH_MODE_TORCH : null);
 
         // make sure that auto focus is an available option
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-            builder = builder.setFocusMode(
-                    autoFocus ? Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE : null);
-        }
+        builder = builder.setFocusMode(
+                autoFocus ? Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE : null);
 
         // Stop & release current camera source before creating a new one.
         if (mCameraSource != null) {

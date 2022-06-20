@@ -30,10 +30,10 @@ import com.google.android.gms.vision.barcode.Barcode;
  * goes away.
  */
 public class BarcodeGraphicTracker extends Tracker<Barcode> {
-    private GraphicOverlay<BarcodeGraphic> mOverlay;
-    private BarcodeGraphic mGraphic;
+    private final GraphicOverlay<BarcodeGraphic> mOverlay;
+    private final BarcodeGraphic mGraphic;
 
-    private BarcodeUpdateListener mBarcodeUpdateListener;
+    private final BarcodeUpdateListener mBarcodeUpdateListener;
 
     /**
      * Consume the item instance detected from an Activity or Fragment level by implementing the

@@ -25,6 +25,7 @@ import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.os.Build;
 import android.os.SystemClock;
+
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresPermission;
 import androidx.annotation.StringDef;
@@ -93,7 +94,7 @@ public class CameraSource {
      * buffer.  We use byte buffers internally because this is a more efficient way to call into
      * native code later (avoids a potential copy).
      */
-    private Map<byte[], ByteBuffer> mBytesToByteBuffer = new HashMap<>();
+    private final Map<byte[], ByteBuffer> mBytesToByteBuffer = new HashMap<>();
 
 
     @StringDef({
@@ -125,7 +126,7 @@ public class CameraSource {
      */
     public static class Builder {
         private final Detector<?> mDetector;
-        private CameraSource mCameraSource = new CameraSource();
+        private final CameraSource mCameraSource = new CameraSource();
 
         /**
          * Creates a camera source builder with the supplied context and detector.  Camera preview
@@ -291,13 +292,8 @@ public class CameraSource {
 
             // SurfaceTexture was introduced in Honeycomb (11), so if we are running and
             // old version of Android. fall back to use SurfaceView.
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                mDummySurfaceTexture = new SurfaceTexture(DUMMY_TEXTURE_NAME);
-                mCamera.setPreviewTexture(mDummySurfaceTexture);
-            } else {
-                mDummySurfaceView = new SurfaceView(mContext);
-                mCamera.setPreviewDisplay(mDummySurfaceView.getHolder());
-            }
+            mDummySurfaceTexture = new SurfaceTexture(DUMMY_TEXTURE_NAME);
+            mCamera.setPreviewTexture(mDummySurfaceTexture);
             mCamera.startPreview();
 
             mProcessingThread = new Thread(mFrameProcessor);
@@ -367,12 +363,8 @@ public class CameraSource {
                     // developer wants to display a preview we must use a SurfaceHolder.  If the developer doesn't
                     // want to display a preview we use a SurfaceTexture if we are running at least Honeycomb.
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                        mCamera.setPreviewTexture(null);
+                    mCamera.setPreviewTexture(null);
 
-                    } else {
-                        mCamera.setPreviewDisplay(null);
-                    }
                 } catch (Exception e) {
                 }
                 mCamera.release();
@@ -585,11 +577,7 @@ public class CameraSource {
      * @param cb the callback to run
      * @return {@code true} if the operation is supported (i.e. from Jelly Bean), {@code false} otherwise
      */
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     public boolean setAutoFocusMoveCallback(@Nullable AutoFocusMoveCallback cb) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
-            return false;
-        }
 
         synchronized (mCameraLock) {
             if (mCamera != null) {
@@ -618,7 +606,7 @@ public class CameraSource {
     /**
      * Wraps the camera1 shutter callback so that the deprecated API isn't exposed.
      */
-    private class PictureStartCallback implements Camera.ShutterCallback {
+    private static class PictureStartCallback implements Camera.ShutterCallback {
         private ShutterCallback mDelegate;
 
         @Override
@@ -652,7 +640,7 @@ public class CameraSource {
     /**
      * Wraps the camera1 auto focus callback so that the deprecated API isn't exposed.
      */
-    private class CameraAutoFocusCallback implements Camera.AutoFocusCallback {
+    private static class CameraAutoFocusCallback implements Camera.AutoFocusCallback {
         private AutoFocusCallback mDelegate;
 
         @Override
@@ -667,7 +655,7 @@ public class CameraSource {
      * Wraps the camera1 auto focus move callback so that the deprecated API isn't exposed.
      */
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    private class CameraAutoFocusMoveCallback implements Camera.AutoFocusMoveCallback {
+    private static class CameraAutoFocusMoveCallback implements Camera.AutoFocusMoveCallback {
         private AutoFocusMoveCallback mDelegate;
 
         @Override
@@ -814,7 +802,7 @@ public class CameraSource {
      * size is null, then there is no picture size with the same aspect ratio as the preview size.
      */
     private static class SizePair {
-        private Size mPreview;
+        private final Size mPreview;
         private Size mPicture;
 
         public SizePair(android.hardware.Camera.Size previewSize,
@@ -924,7 +912,7 @@ public class CameraSource {
 
     private byte[] createPreviewBuffer(Size previewSize) {
         int bitsPerPixel = ImageFormat.getBitsPerPixel(ImageFormat.NV21);
-        long sizeInBits = previewSize.getHeight() * previewSize.getWidth() * bitsPerPixel;
+        long sizeInBits = (long) previewSize.getHeight() * previewSize.getWidth() * bitsPerPixel;
         int bufferSize = (int) Math.ceil(sizeInBits / 8.0d) + 1;
 
         byte[] byteArray = new byte[bufferSize];
@@ -946,7 +934,7 @@ public class CameraSource {
 
     private class FrameProcessingRunnable implements Runnable {
         private Detector<?> mDetector;
-        private long mStartTimeMillis = SystemClock.elapsedRealtime();
+        private final long mStartTimeMillis = SystemClock.elapsedRealtime();
 
         // This lock guards all of the member variables below.
         private final Object mLock = new Object();
@@ -1038,16 +1026,15 @@ public class CameraSource {
         }
     }
 
-    public Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int h) {
+    public Camera.Size getOptimalPreviewSize(List<Camera.Size> sizes, int w, int targetHeight) {
         final double ASPECT_TOLERANCE = 0.1;
-        double targetRatio=(double)h / w;
+        double targetRatio = (double) targetHeight / w;
 
         if (sizes == null) return null;
 
         Camera.Size optimalSize = null;
         double minDiff = Double.MAX_VALUE;
 
-        int targetHeight = h;
 
         for (Camera.Size size : sizes) {
             double ratio = (double) size.width / size.height;
@@ -1059,7 +1046,6 @@ public class CameraSource {
         }
 
         if (optimalSize == null) {
-            minDiff = Double.MAX_VALUE;
             for (Camera.Size size : sizes) {
                 if (Math.abs(size.height - targetHeight) < minDiff) {
                     optimalSize = size;

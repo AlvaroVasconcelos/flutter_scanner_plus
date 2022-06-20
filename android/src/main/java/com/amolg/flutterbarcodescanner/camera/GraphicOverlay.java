@@ -39,21 +39,26 @@ import java.util.Vector;
 
 public class GraphicOverlay<T extends GraphicOverlay.Graphic> extends View {
     private final Object mLock = new Object();
-    private float mWidthScaleFactor = 1.0f, mHeightScaleFactor = 1.0f;
+    private final float mWidthScaleFactor = 1.0f;
+    private final float mHeightScaleFactor = 1.0f;
 
     private int mFacing = CameraSource.CAMERA_FACING_BACK;
-    private Set<T> mGraphics = new HashSet<>();
+    private final Set<T> mGraphics = new HashSet<>();
 
     /**
      * Custom added values for overlay
      */
     private float left, top, endY;
-    private int rectWidth, rectHeight, frames, lineColor, lineWidth;
+    private final int rectWidth;
+    private final int rectHeight;
+    private final int frames;
+    private final int lineColor;
+    private final int lineWidth;
     private boolean revAnimation;
 
 
     public static abstract class Graphic {
-        private GraphicOverlay mOverlay;
+        private final GraphicOverlay mOverlay;
 
         public Graphic(GraphicOverlay overlay) {
             mOverlay = overlay;
@@ -168,7 +173,7 @@ public class GraphicOverlay<T extends GraphicOverlay.Graphic> extends View {
         // draw horizontal line
         Paint line = new Paint();
         line.setColor(lineColor);
-        line.setStrokeWidth(Float.valueOf(lineWidth));
+        line.setStrokeWidth((float) lineWidth);
 
         // draw the line to product animation
         if (endY >= top + AppUtil.dpToPx(getContext(), rectHeight) + frames) {

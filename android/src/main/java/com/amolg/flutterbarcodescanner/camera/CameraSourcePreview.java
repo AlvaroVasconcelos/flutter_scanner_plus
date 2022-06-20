@@ -34,8 +34,8 @@ import java.io.IOException;
 public class CameraSourcePreview extends ViewGroup {
     private static final String TAG = "CameraSourcePreview";
 
-    private Context mContext;
-    private SurfaceView mSurfaceView;
+    private final Context mContext;
+    private final SurfaceView mSurfaceView;
     private boolean mStartRequested;
     private boolean mSurfaceAvailable;
     private CameraSource mCameraSource;
@@ -133,7 +133,7 @@ public class CameraSourcePreview extends ViewGroup {
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
 
-        int height = 0, width = 0;
+        int height, width;
 
         if (isPortraitMode()) {
             width = bottom - top;
